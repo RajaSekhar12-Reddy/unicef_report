@@ -1,5 +1,5 @@
 ---
-title: "UNICEF Global Child Development Analysis"
+title: "UNICEF Global Child Development Analysis & Adolescent population (10-19)"
 
 format:
   html:
@@ -18,8 +18,8 @@ execute:
   error: false
 ---
 
-**Student Name: Isha Tanwar**  
-**Student ID: 48614**  
+**Student Name: Shashidhar Gurudu**  
+**Student ID: 47860**  
 **Programme: Masters in Management Strategy**
 
 # 🌍 Raising Awareness on Global Child Development

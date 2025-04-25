@@ -20,7 +20,7 @@ The report includes several visualizations:
 
 ## View the Report
 
-The full report can be viewed [here](https://[your-github-username].github.io/unicef-analysis/).
+The full report can be viewed [here](https://[your-github-username].github.io/unicef_report/).
 
 ## Data Sources
 
@@ -35,3 +35,4 @@ The full report can be viewed [here](https://[your-github-username].github.io/un
 - GeoPandas for mapping
 
 ## Author
+Shashidhar Gurudu

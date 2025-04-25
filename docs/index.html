@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>UNICEF Global Child Development Analysis</title>
+<title>UNICEF Global Child Development Analysis &amp; Adolescent population (10-19)</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -2214,7 +2214,7 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">UNICEF Global Child Development Analysis</h1>
+<h1 class="title">UNICEF Global Child Development Analysis &amp; Adolescent population (10-19)</h1>
 </div>
 
 
@@ -2231,8 +2231,8 @@ vertical-align: -.125em;
 </header>
 
 
-<p><strong>Student Name: Isha Tanwar</strong><br>
-<strong>Student ID: 48614</strong><br>
+<p><strong>Student Name: Shashidhar Gurudu</strong><br>
+<strong>Student ID: 47860</strong><br>
 <strong>Programme: Masters in Management Strategy</strong></p>
 <section id="raising-awareness-on-global-child-development" class="level1">
 <h1>🌍 Raising Awareness on Global Child Development</h1>
@@ -2262,7 +2262,7 @@ vertical-align: -.125em;
 </section>
 <section id="data-loading-and-preparation" class="level2">
 <h2 class="anchored" data-anchor-id="data-loading-and-preparation">📦 Data Loading and Preparation</h2>
-<div id="fdfa09c9" class="cell" data-execution_count="1">
+<div id="cb3ddb0c" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import necessary libraries</span></span>
@@ -2392,7 +2392,7 @@ Analysis will focus on the indicator: Adolescent population (10-19) for year 202
 <section id="exploratory-data-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="exploratory-data-analysis">🔍 Exploratory Data Analysis</h2>
 <p>Before diving into specific visualizations, it’s important to understand the structure and content of our dataset. This section provides an overview of the UNICEF indicators we’re analyzing.</p>
-<div id="68b21d47" class="cell" data-execution_count="2">
+<div id="64740e1f" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Display basic statistics about the dataset</span></span>
@@ -2437,7 +2437,7 @@ Sample of available indicators:
 <section id="world-map-visualization-global-distribution" class="level2">
 <h2 class="anchored" data-anchor-id="world-map-visualization-global-distribution">🌎 World Map Visualization: Global Distribution</h2>
 <p>The world map below shows the geographic distribution of our primary child development indicator across countries. This visualization helps identify regions where children face the greatest challenges and where resources may be most needed.</p>
-<div id="828cffab" class="cell" data-execution_count="3">
+<div id="f354f9d2" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2574,7 +2574,7 @@ Sample of available indicators:
 <section id="bar-chart-visualization-gender-comparison" class="level2">
 <h2 class="anchored" data-anchor-id="bar-chart-visualization-gender-comparison">📊 Bar Chart Visualization: Gender Comparison</h2>
 <p>This bar chart compares the top countries for our key indicator, broken down by gender. This visualization helps identify not only which countries have the highest values but also reveals any significant gender disparities within each country.</p>
-<div id="210a6806" class="cell" data-execution_count="4">
+<div id="ab8f5dae" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_bar_chart(indicator, year, top_n<span class="op">=</span><span class="dv">10</span>, data<span class="op">=</span>df):</span>
@@ -2710,7 +2710,7 @@ Lowest male-to-female ratio: Congo, the Democratic Republic of the (1.00)</code>
 <section id="scatterplot-with-regression-line-gender-correlation" class="level2">
 <h2 class="anchored" data-anchor-id="scatterplot-with-regression-line-gender-correlation">🔄 Scatterplot with Regression Line: Gender Correlation</h2>
 <p>This scatterplot examines the relationship between male and female populations for our key indicator. The regression line shows the overall trend, while individual data points reveal countries that deviate from this pattern.</p>
-<div id="b3cc5279" class="cell" data-execution_count="5">
+<div id="4ec3cc15" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> (</span>
@@ -2852,7 +2852,7 @@ This indicates a very strong positive relationship between male and female popul
 <section id="time-series-chart-trends-over-time" class="level2">
 <h2 class="anchored" data-anchor-id="time-series-chart-trends-over-time">⏳ Time Series Chart: Trends Over Time</h2>
 <p>This time series visualization tracks how our key indicator has changed over time across selected countries. This helps identify long-term trends, sudden changes, and differences in trajectories between nations.</p>
-<div id="b5b5bac8" class="cell" data-execution_count="6">
+<div id="3afb4639" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_time_series(indicator_name, data<span class="op">=</span>df, num_countries<span class="op">=</span><span class="dv">8</span>, min_years<span class="op">=</span><span class="dv">5</span>):</span>
@@ -2982,7 +2982,7 @@ Overall trend: Majority of countries (8 out of 8) show INCREASING values</code><
 <section id="bottom-countries-visualization-gender-comparison" class="level2">
 <h2 class="anchored" data-anchor-id="bottom-countries-visualization-gender-comparison">📊 Bottom Countries Visualization: Gender Comparison</h2>
 <p>This bar chart compares the countries with the lowest values for our key indicator, broken down by gender. By examining both high and low-performing nations, we can identify global patterns and potential intervention points.</p>
-<div id="08e0a3a9" class="cell" data-execution_count="7">
+<div id="f7b7202a" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_bottom_bar_chart(indicator, year, bottom_n<span class="op">=</span><span class="dv">10</span>, data<span class="op">=</span>df):</span>
