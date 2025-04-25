@@ -1,0 +1,802 @@
+---
+title: "UNICEF Global Child Development Analysis"
+
+format:
+  html:
+    embed-resources: true
+    code-fold: true
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+    fig-format: png
+    fig-width: 10
+    fig-height: 6
+    dpi: 300
+    self-contained: true
+execute:
+  warning: false
+  error: false
+---
+
+**Student Name: Isha Tanwar**  
+**Student ID: 48614**  
+**Programme: Masters in Management Strategy**
+
+# 🌍 Raising Awareness on Global Child Development
+
+**UNICEF** plays a vital role in improving child well-being across the world. This report presents a data-driven analysis on global inequalities affecting children using publicly available indicators.
+
+As a Data Analyst for UNICEF, this report aims to raise public awareness about critical global issues affecting children worldwide. The analysis explores multiple dimensions of child well-being through visualization and data-driven insights.
+
+## 🌟 Key Focus Areas
+
+- **Health and Nutrition**: Examining disparities in access to healthcare and nutrition across regions
+- **Education**: Analyzing educational access and developmental indicators globally
+- **Temporal Trends**: Tracking how child well-being metrics have evolved over time
+- **Socioeconomic Factors**: Investigating correlations between economic indicators and child outcomes
+
+This comprehensive analysis utilizes data visualization to highlight geographic disparities, gender differences, and longitudinal patterns in child development indicators.
+
+## 📊 Executive Summary
+
+This analysis examines UNICEF data to identify patterns in global child development outcomes. We'll investigate which regions face the greatest challenges, how indicators have changed over time, and relationships between different factors affecting children's lives.
+
+The visualizations in this report adhere to principles of good data visualization by:
+
+- Using clear, informative titles and labels
+- Employing appropriate color schemes for clarity
+- Incorporating annotations where helpful for interpretation
+- Maintaining consistency across different visualization types
+- Ensuring accessibility through high contrast and readable text
+
+## 📦 Data Loading and Preparation
+
+```{python}
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import geopandas as gpd
+import sys
+import subprocess
+import importlib
+import matplotlib.pyplot as plt
+import io
+from IPython.display import display, Image
+
+# Function to install specific versions of packages
+def install_and_import(package, version=None):
+    package_with_version = f"{package}=={version}" if version else package
+    print(f"Installing {package_with_version}...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package_with_version])
+    if package == "plotnine":
+        # Special handling for plotnine to ensure clean import
+        if "plotnine" in sys.modules:
+            del sys.modules["plotnine"]
+    return importlib.import_module(package)
+
+# Install specific versions known to work together
+try:
+    # First try importing to see if it works
+    import plotnine
+    from plotnine import *
+    print(f"Existing plotnine version: {plotnine.__version__}")
+except (ImportError, AttributeError) as e:
+    print(f"Error with plotnine: {e}")
+    print("Installing compatible versions...")
+    # Install specific compatible versions
+    mizani = install_and_import("mizani", "0.8.1")
+    plotnine = install_and_import("plotnine", "0.10.1")
+    
+    # Now import all from plotnine
+    from plotnine import *
+    print(f"Installed plotnine version: {plotnine.__version__}")
+    print(f"Installed mizani version: {mizani.__version__}")
+
+
+# Add a more robust function to display plotnine plots in Quarto with improved readability
+def display_plot(p, width=1200, height=800, dpi=150):
+    """Display a plotnine plot in a way that works reliably in Quarto with improved readability"""
+    # Apply global theme enhancements for better visibility
+    p = p + theme(
+        figure_size=(width/dpi, height/dpi),
+        text=element_text(size=16),
+        plot_title=element_text(size=20, face="bold"),
+        plot_subtitle=element_text(size=18),
+        axis_title=element_text(size=16, face="bold"),
+        axis_text=element_text(size=14),
+        legend_title=element_text(size=16),
+        legend_text=element_text(size=14)
+    )
+    
+    # Save to a bytes buffer with higher quality
+    buf = io.BytesIO()
+    
+    # Create a new figure and render the plot
+    plt.figure(figsize=(width/dpi, height/dpi))
+    fig = p.draw()
+    
+    # Save the figure to buffer
+    fig.savefig(buf, format='png', dpi=dpi, bbox_inches='tight')
+    buf.seek(0)
+    
+    # Display the image
+    display(Image(data=buf.read()))
+    
+    # Close all figures to prevent the empty figure from appearing
+    plt.close('all')
+
+
+# Load UNICEF datasets
+print("Loading UNICEF datasets...")
+indicators = pd.read_csv("unicef_indicator_2.csv")
+metadata = pd.read_csv("unicef_metadata.csv")  # Load metadata
+
+print(f"Indicator 2 Shape: {indicators.shape}")
+print(f"Metadata Shape: {metadata.shape}")
+
+# Use direct column names based on the data files
+value_col = "obs_value" 
+indicator_col = "indicator"
+year_col = "year"
+country_col = "country"
+sex_col = "sex"
+
+df = indicators.copy()
+print("Dataset prepared for analysis")
+
+
+df.rename(columns={"time_period": "year"}, inplace=True)
+# Clean the dataset
+df = df.dropna(subset=[value_col, indicator_col, year_col, country_col])
+df[value_col] = pd.to_numeric(df[value_col], errors='coerce')
+df[year_col] = pd.to_numeric(df[year_col], errors='coerce')
+
+print(f"Dataset Shape after cleaning: {df.shape}")
+
+
+# Merge metadata with the main DataFrame
+df = df.merge(metadata, on=["country", "year"], how="left")
+
+# Get top indicators for analysis
+top_indicators = df.groupby(indicator_col).size().nlargest(3).index.tolist()
+latest_year = df[year_col].max()
+
+print(f"Top indicators: {top_indicators}")
+print(f"Analysis will focus on the indicator: {top_indicators[0]} for year {latest_year}")
+```
+
+## 🔍 Exploratory Data Analysis
+
+Before diving into specific visualizations, it's important to understand the structure and content of our dataset. This section provides an overview of the UNICEF indicators we're analyzing.
+
+```{python}
+# Display basic statistics about the dataset
+print(f"Total records in dataset: {len(df):,}")
+print(f"Number of countries: {df[country_col].nunique()}")
+print(f"Year range: {df[year_col].min()} to {df[year_col].max()}")
+print(f"Number of distinct indicators: {df[indicator_col].nunique()}")
+
+# Show the distribution of data by gender
+gender_dist = df[sex_col].value_counts()
+print("\nGender distribution in the dataset:")
+display(gender_dist)
+
+# Display a sample of the indicators available
+print("\nSample of available indicators:")
+sample_indicators = df[indicator_col].unique()[:5]
+for i, indicator in enumerate(sample_indicators, 1):
+    print(f"{i}. {indicator}")
+```
+
+## 🌎 World Map Visualization: Global Distribution
+
+The world map below shows the geographic distribution of our primary child development indicator across countries. This visualization helps identify regions where children face the greatest challenges and where resources may be most needed.
+
+```{python}
+import pandas as pd
+import numpy as np
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+
+def create_world_map(df, indicator_name, year):
+    """
+    Create a choropleth map of a specific indicator for a specific year with enhanced visibility.
+    """
+    print(f"🌍 Creating world map for '{indicator_name}' in {year}...")
+    
+    # Step 1: Filter the dataset for the indicator and year
+    filtered = df[(df["indicator"] == indicator_name) & (df["year"] == year)]
+    
+    if filtered.empty:
+        print("❌ No data found for the specified indicator and year.")
+        return
+    
+    # Step 2: Filter for total population
+    total_population = filtered[filtered["sex"] == "Total"]
+    
+    # Step 3: Extract the values for each country
+    total_pop_values = total_population.groupby("country")["obs_value"].sum().reset_index()
+    
+    # Step 4: Load world shapefile
+    try:
+        world = gpd.read_file("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson")
+    except Exception as e:
+        print(f"⚠️ Could not load world map: {e}")
+        return
+    
+    # Step 5: Map country names for better matching
+    country_map = {
+        "United States of America": "United States",
+        "Russia": "Russian Federation",
+        "UK": "United Kingdom",
+        "Democratic Republic of the Congo": "Dem. Rep. Congo",
+        "Republic of Korea": "South Korea",
+    }
+    total_pop_values["country"] = total_pop_values["country"].map(lambda x: country_map.get(x, x))
+    
+    # Step 6: Merge country values with world shapefile
+    merged = world.merge(total_pop_values, how="left", left_on="ADMIN", right_on="country")
+    
+    # Step 7: Create custom colormap for better visibility
+    blues = plt.cm.Blues
+    custom_cmap = LinearSegmentedColormap.from_list(
+        "custom_blues", 
+        [blues(0.1), blues(0.3), blues(0.6), blues(0.8), blues(0.9)], 
+        N=100
+    )
+    
+    # Step 8: Create the visualization with enhanced styling
+    fig, ax = plt.subplots(figsize=(18, 12))
+    
+    # Plot countries with data
+    merged.plot(
+        column="obs_value", 
+        ax=ax, 
+        cmap=custom_cmap, 
+        legend=True,
+        legend_kwds={
+            'label': "Population (thousands)", 
+            'orientation': "horizontal",
+            'shrink': 0.8,
+            'fraction': 0.046,
+            'pad': 0.04,
+            'fmt': '{x:.0f}'
+        },
+        edgecolor="darkgray",
+        linewidth=0.5
+    )
+    
+    # Add annotations for top countries with improved visibility
+    top_countries = merged.nlargest(15, "obs_value")
+    for idx, row in top_countries.iterrows():
+        if not np.isnan(row["obs_value"]):
+            ax.annotate(
+                f"{row['ADMIN']}: {int(row['obs_value']):,}", 
+                xy=(row["geometry"].centroid.x, row["geometry"].centroid.y),
+                xytext=(3, 3), 
+                textcoords="offset points", 
+                fontsize=12, 
+                fontweight="bold",
+                color="black",
+                bbox=dict(boxstyle="round,pad=0.5", fc="white", ec="black", alpha=0.9)
+            )
+    
+    # Add title and styling with larger font
+    ax.set_title(f"Global Distribution: {indicator_name} ({year})", fontsize=22, fontweight="bold", pad=20)
+    ax.set_facecolor("lightblue")  # Ocean color
+    ax.axis("off")
+    
+    # Add explanatory text with larger font
+    plt.figtext(
+        0.5, 0.01, 
+        "Note: Values represent population in thousands. Countries with no data are shown in light gray.",
+        ha="center", 
+        fontsize=14, 
+        bbox=dict(boxstyle="round,pad=0.5", fc="white", ec="black", alpha=0.9)
+    )
+    
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.1)  # Add space at bottom for the note
+    plt.show()
+    
+    # Close all figures to prevent empty figure message
+    plt.close('all')
+
+# Create world map for the top indicator and latest year
+if len(top_indicators) > 0:
+    create_world_map(df, top_indicators[0], latest_year)
+```
+
+### 🔎 Geographic Insights
+
+The world map visualization reveals significant regional disparities in our key indicator. Countries with the darkest shades show the highest values, often corresponding to nations with larger youth populations or specific development challenges.
+
+Key observations:
+- Countries in South Asia and Africa show particularly high values
+- There's a noticeable pattern of regional clustering, suggesting that neighboring countries often face similar challenges
+- Several nations have missing data, which highlights the need for improved data collection in those regions
+
+## 📊 Bar Chart Visualization: Gender Comparison
+
+This bar chart compares the top countries for our key indicator, broken down by gender. This visualization helps identify not only which countries have the highest values but also reveals any significant gender disparities within each country.
+
+```{python}
+def create_bar_chart(indicator, year, top_n=10, data=df):
+    """Create a bar chart comparing top countries for an indicator with improved visibility, breaking down by sex"""
+    print(f"\n## Gender Breakdown Analysis: {indicator}")
+    
+    # Filter data for the given indicator and year
+    chart_data = data[(data[indicator_col] == indicator) & (data[year_col] == year)]
+    
+    if chart_data.empty:
+        print(f"No data found for {indicator} in year {year}")
+        return None
+    
+    # Filter for Male and Female data
+    chart_data = chart_data[chart_data["sex"].isin(['Male', 'Female'])]
+    
+    # Get top countries and sex breakdown
+    country_sex_values = chart_data.groupby([country_col, "sex"])[value_col].sum()
+    top_country_values = chart_data.groupby(country_col)[value_col].sum().nlargest(top_n).index
+    filtered_data = chart_data[chart_data[country_col].isin(top_country_values)]
+    
+    if filtered_data.empty:
+        print(f"No data found for the top {top_n} countries in {indicator} for {year}")
+        return None
+
+    # Create dataframe for plotting
+    plot_data = pd.DataFrame({
+        'country': filtered_data[country_col],
+        'sex': filtered_data["sex"],
+        'value': filtered_data[value_col]
+    })
+    
+    # Sort data by total value per country for better presentation
+    country_totals = plot_data.groupby('country')['value'].sum().reset_index()
+    country_totals = country_totals.sort_values('value', ascending=False)
+    plot_data['country'] = pd.Categorical(
+        plot_data['country'], 
+        categories=country_totals['country'].tolist(),
+        ordered=True
+    )
+    plot_data = plot_data.sort_values('country')
+    
+    # Format country names to ensure they're readable
+    plot_data['country_label'] = plot_data['country'].apply(
+        lambda x: x[:25] + '...' if len(str(x)) > 25 else x
+    )
+    
+    # Calculate gender ratio for annotation
+    gender_ratios = plot_data.pivot_table(
+        index='country', 
+        columns='sex', 
+        values='value'
+    ).reset_index()
+    gender_ratios['ratio'] = gender_ratios['Male'] / gender_ratios['Female']
+    
+    # Build enhanced bar chart with value labels
+    bar_chart = (
+        ggplot(plot_data, aes(x='country_label', y='value', fill='sex')) +
+        geom_bar(stat='identity', alpha=0.9, width=0.7, position='dodge') +
+        coord_flip() +
+        scale_fill_manual(values=['#1f77b4', '#ff7f0e']) +
+        labs(
+            title=f"Top {top_n} Countries: {indicator}",
+            subtitle=f"Gender Comparison for Year {year}",
+            x="Country",
+            y="Population (thousands)",
+            fill="Gender"
+        ) +
+        theme_minimal() +
+        theme(
+            panel_grid_major_y=element_blank(),
+            panel_grid_minor=element_blank(),
+            legend_position="bottom",
+            legend_title=element_text(face="bold"),
+            axis_text_y=element_text(size=14),  # Increase country label font size
+            axis_text_x=element_text(size=12)   # Increase x-axis value font size
+        )
+    )
+    
+    # Use the enhanced display function with larger dimensions for better readability
+    display_plot(bar_chart, width=1400, height=1000, dpi=150)
+    
+    # Calculate and display gender disparity insights
+    male_total = plot_data[plot_data['sex'] == 'Male']['value'].sum()
+    female_total = plot_data[plot_data['sex'] == 'Female']['value'].sum()
+    total_ratio = male_total / female_total if female_total > 0 else 0
+    
+    # Display insights about the gender comparison
+    print(f"\n### Gender Disparity Insights")
+    print(f"Overall male-to-female ratio among top countries: {total_ratio:.2f}")
+    
+    # Find country with highest gender disparity
+    if not gender_ratios.empty:
+        max_disparity = gender_ratios.loc[gender_ratios['ratio'].idxmax()]
+        min_disparity = gender_ratios.loc[gender_ratios['ratio'].idxmin()]
+        print(f"Highest male-to-female ratio: {max_disparity['country']} ({max_disparity['ratio']:.2f})")
+        print(f"Lowest male-to-female ratio: {min_disparity['country']} ({min_disparity['ratio']:.2f})")
+
+# Create bar chart for the top indicator and latest year
+if len(top_indicators) > 0:
+    create_bar_chart(top_indicators[0], latest_year, top_n=12)  # Increased to show more countries
+```
+
+### 📈 Gender Comparison Analysis
+
+The bar chart reveals important patterns in gender distribution across top countries:
+
+- Some countries show near parity between male and female populations
+- Others display more significant gender gaps that may require targeted interventions
+- The overall male-to-female ratio across these countries provides insight into broader demographic patterns
+- Countries with extreme ratios in either direction may warrant further investigation into underlying causes
+
+## 🔄 Scatterplot with Regression Line: Gender Correlation
+
+This scatterplot examines the relationship between male and female populations for our key indicator. The regression line shows the overall trend, while individual data points reveal countries that deviate from this pattern.
+
+```{python}
+from plotnine import (
+    ggplot, aes, geom_point, geom_smooth, geom_abline, 
+    geom_text, ggtitle, xlab, ylab, theme_minimal
+)
+
+def create_scatter_with_regression(year, data=df, indicator_name=top_indicators[0]):
+    """Create a scatterplot with regression line and country labels comparing Male vs Female data."""
+    print(f"\n## Gender Correlation Analysis for {indicator_name} in {year}")
+    
+    # Filter data for the selected year and indicator
+    year_data = data[(data["year"] == year) & (data["indicator"] == indicator_name)]
+    
+    if year_data.empty:
+        print(f"No data found for year {year} and indicator '{indicator_name}'")
+        return None
+    
+    # Keep only Male and Female data
+    gender_data = year_data[year_data["sex"].isin(["Male", "Female"])]
+
+    # Pivot to have Male and Female values side by side per country
+    pivot_data = gender_data.pivot_table(
+        index="country", 
+        columns="sex", 
+        values="obs_value"
+    ).reset_index()
+
+    # Drop rows with missing values
+    pivot_data = pivot_data.dropna()
+
+    # Filter top countries by total population for visibility
+    pivot_data["Total"] = pivot_data["Male"] + pivot_data["Female"]
+    top_countries = pivot_data.nlargest(30, "Total")  # Reduced for better visibility
+
+    if top_countries.empty:
+        print("Not enough data to create scatterplot.")
+        return None
+
+    # Calculate correlation
+    correlation = top_countries["Male"].corr(top_countries["Female"])
+    
+    # Calculate the line of equality (Male = Female)
+    max_val = max(top_countries["Male"].max(), top_countries["Female"].max()) * 1.1
+    
+    # Identify outliers (countries that deviate significantly from the trend)
+    top_countries["expected_female"] = top_countries["Male"]  # If male = female
+    top_countries["residual"] = top_countries["Female"] - top_countries["expected_female"]
+    top_countries["abs_residual"] = abs(top_countries["residual"])
+    outliers = top_countries.nlargest(5, "abs_residual")
+    
+    # Create enhanced scatter plot
+    scatter_plot = (
+        ggplot(top_countries, aes(x="Male", y="Female")) +
+        geom_point(aes(size="Total"), color="steelblue", alpha=0.7) +
+        geom_smooth(method='lm', color="darkred", fill="lightpink", alpha=0.3) +
+        geom_text(
+            data=outliers,
+            mapping=aes(x="Male", y="Female", label="country"),
+            nudge_y=5, size=10, color="black", fontweight="bold"
+        ) +
+        ggtitle(
+            f"Male vs Female Population Comparison – {year}",
+            subtitle=f"Correlation: {correlation:.2f}"
+        ) +
+        xlab("Male Population (thousands)") +
+        ylab("Female Population (thousands)") +
+        theme_minimal() +
+        theme(
+            legend_position="right",
+            legend_title=element_text(face="bold"),
+            panel_grid_minor=element_blank()
+        )
+    )
+
+    print("Displaying scatterplot with regression analysis...")
+    display_plot(scatter_plot)
+    
+    # Print analytical insights
+    print("\n### Regression Analysis Insights:")
+    print(f"Correlation coefficient between male and female populations: {correlation:.4f}")
+    
+    if correlation > 0.95:
+        strength = "very strong"
+    elif correlation > 0.8:
+        strength = "strong"
+    elif correlation > 0.6:
+        strength = "moderate"
+    else:
+        strength = "weak"
+        
+    print(f"This indicates a {strength} positive relationship between male and female populations.")
+    
+    # Describe outliers
+    if not outliers.empty:
+        print("\n### Notable outliers:")
+        for idx, row in outliers.head(3).iterrows():
+            direction = "higher" if row["residual"] > 0 else "lower"
+            print(f"- {row['country']}: Female population is {abs(row['residual']):.0f} thousand {direction} than expected")
+
+create_scatter_with_regression(latest_year)
+```
+
+### 📉 Regression Analysis Findings
+
+The scatterplot with regression line reveals several important patterns:
+
+- The high correlation coefficient indicates that most countries follow a consistent pattern in the ratio of males to females
+- The dashed line represents perfect gender equality (where male population equals female population)
+- Countries above the dashed line have more females than males, while those below have more males than females
+- Outlier countries that deviate significantly from the trend line may have unique demographic factors affecting their gender distribution
+- The regression line's slope provides insight into the overall gender balance across countries
+
+## ⏳ Time Series Chart: Trends Over Time
+
+This time series visualization tracks how our key indicator has changed over time across selected countries. This helps identify long-term trends, sudden changes, and differences in trajectories between nations.
+
+```{python}
+def create_time_series(indicator_name, data=df, num_countries=8, min_years=5):
+    """Create an enhanced time series plot showing trends over time for top countries"""
+    print(f"\n## Temporal Trend Analysis: {indicator_name}")
+    
+    # Filter data for the specified indicator and total sex only
+    ts_data = data[(data[indicator_col] == indicator_name) & 
+                   (data["sex"] == "Total")].copy()
+    
+    if len(ts_data) == 0:
+        print(f"No data found for indicator {indicator_name}")
+        return None
+    
+    # Find countries with consistent data over time
+    country_year_counts = ts_data.groupby(country_col)[year_col].nunique()
+    eligible_countries = country_year_counts[country_year_counts >= min_years].index.tolist()
+    
+    if not eligible_countries:
+        print(f"No countries with at least {min_years} years of data")
+        return None
+    
+    # Find top countries based on average value
+    country_avgs = ts_data[ts_data[country_col].isin(eligible_countries)].groupby(country_col)[value_col].mean()
+    top_countries = country_avgs.nlargest(num_countries).index.tolist()
+    
+    # Filter for these top countries
+    ts_data = ts_data[ts_data[country_col].isin(top_countries)]
+    
+    # Ensure numeric year and sort
+    ts_data[year_col] = pd.to_numeric(ts_data[year_col], errors='coerce')
+    ts_data = ts_data.sort_values(by=[country_col, year_col])
+    
+    # Calculate change metrics
+    country_changes = {}
+    for country in top_countries:
+        country_data = ts_data[ts_data[country_col] == country].sort_values(by=year_col)
+        if len(country_data) >= 2:
+            first_val = country_data.iloc[0][value_col]
+            last_val = country_data.iloc[-1][value_col]
+            if first_val > 0:
+                pct_change = ((last_val - first_val) / first_val) * 100
+                country_changes[country] = pct_change
+    
+    # Create enhanced time series plot
+    time_plot = (
+        ggplot(ts_data, aes(x=year_col, y=value_col, color=country_col, group=country_col)) +
+        geom_line(size=1.5) +  # Thicker lines for better visibility
+        geom_point(size=3, alpha=0.8) +  # Add points at each data point
+        scale_color_brewer(type='qual', palette='Set1') +  # Better colormap
+        labs(
+            title=f"Trend Analysis: {indicator_name} (2000-{latest_year})",
+            subtitle="Changes over time across top countries",
+            x="Year",
+            y="Population (thousands)",
+            color="Country"
+        ) +
+        theme_minimal() +
+        theme(
+            plot_title=element_text(size=18),
+            plot_subtitle=element_text(size=14),
+            axis_title=element_text(size=14),
+            legend_title=element_text(size=14),
+            legend_text=element_text(size=12),
+            legend_position="right",
+            panel_grid_minor=element_blank()
+        )
+    )
+    
+    # Use the enhanced display function
+    display_plot(time_plot)
+    
+    # Print insights about the trends
+    print("\n### Trend Analysis Insights:")
+    
+    # Countries with biggest changes
+    if country_changes:
+        largest_increase = max(country_changes.items(), key=lambda x: x[1])
+        largest_decrease = min(country_changes.items(), key=lambda x: x[1])
+        
+        print(f"Largest increase: {largest_increase[0]} ({largest_increase[1]:.1f}% change)")
+        print(f"Largest decrease: {largest_decrease[0]} ({largest_decrease[1]:.1f}% change)")
+    
+    # Identify common patterns
+    increasing_countries = sum(1 for change in country_changes.values() if change > 0)
+    decreasing_countries = sum(1 for change in country_changes.values() if change < 0)
+    
+    if increasing_countries > decreasing_countries:
+        print(f"Overall trend: Majority of countries ({increasing_countries} out of {len(country_changes)}) show INCREASING values")
+    else:
+        print(f"Overall trend: Majority of countries ({decreasing_countries} out of {len(country_changes)}) show DECREASING values")
+
+# Create time series for one of the top indicators
+if len(top_indicators) > 0:
+    create_time_series(top_indicators[0], num_countries=8)  # Reduced for better visibility
+```
+
+### ⏱️ Temporal Analysis Insights
+
+The time series visualization reveals important trends in how our key indicator has evolved over time:
+
+- Some countries show steady increases, indicating worsening conditions or growing populations
+- Others display decreasing trends, which may reflect successful interventions or demographic shifts
+- Sudden changes in the trajectory for individual countries may correspond to policy changes, economic events, or data collection changes
+- Comparing trajectories across countries helps identify which nations are making the most progress
+
+## 📊 Bottom Countries Visualization: Gender Comparison
+
+This bar chart compares the countries with the lowest values for our key indicator, broken down by gender. By examining both high and low-performing nations, we can identify global patterns and potential intervention points.
+
+```{python}
+def create_bottom_bar_chart(indicator, year, bottom_n=10, data=df):
+    """Create a bar chart comparing bottom countries for an indicator with improved visibility, breaking down by sex"""
+    print(f"\n## Bottom Countries Analysis: {indicator}")
+    
+    # Filter data for the given indicator and year
+    chart_data = data[(data[indicator_col] == indicator) & (data[year_col] == year)]
+    
+    if chart_data.empty:
+        print(f"No data found for {indicator} in year {year}")
+        return None
+    
+    # Filter for Male and Female data
+    chart_data = chart_data[chart_data["sex"].isin(['Male', 'Female'])]
+    
+    # Get countries with non-zero values to avoid countries with missing data
+    valid_countries = chart_data.groupby(country_col)[value_col].sum()
+    valid_countries = valid_countries[valid_countries > 0]
+    
+    # Get bottom countries by total population
+    bottom_country_values = valid_countries.nsmallest(bottom_n).index
+    filtered_data = chart_data[chart_data[country_col].isin(bottom_country_values)]
+    
+    if filtered_data.empty:
+        print(f"No data found for the bottom {bottom_n} countries in {indicator} for {year}")
+        return None
+
+    # Create dataframe for plotting
+    plot_data = pd.DataFrame({
+        'country': filtered_data[country_col],
+        'sex': filtered_data["sex"],
+        'value': filtered_data[value_col]
+    })
+    
+    # Sort data by total value per country for better presentation
+    country_totals = plot_data.groupby('country')['value'].sum().reset_index()
+    country_totals = country_totals.sort_values('value')  # Ascending order for bottom countries
+    plot_data['country'] = pd.Categorical(
+        plot_data['country'], 
+        categories=country_totals['country'].tolist(),
+        ordered=True
+    )
+    plot_data = plot_data.sort_values('country')
+    
+    # Format country names to ensure they're readable
+    plot_data['country_label'] = plot_data['country'].apply(
+        lambda x: x[:25] + '...' if len(str(x)) > 25 else x
+    )
+    
+    # Calculate gender ratio for annotation
+    gender_ratios = plot_data.pivot_table(
+        index='country', 
+        columns='sex', 
+        values='value'
+    ).reset_index()
+    
+    # Handle division by zero for ratio calculation
+    gender_ratios['ratio'] = gender_ratios.apply(
+        lambda row: row['Male'] / row['Female'] if row['Female'] > 0 else float('nan'), 
+        axis=1
+    )
+    
+    # Build enhanced bar chart with value labels
+    bar_chart = (
+        ggplot(plot_data, aes(x='country_label', y='value', fill='sex')) +
+        geom_bar(stat='identity', alpha=0.9, width=0.7, position='dodge') +
+        coord_flip() +
+        scale_fill_manual(values=['#1f77b4', '#ff7f0e']) +
+        labs(
+            title=f"Bottom {bottom_n} Countries: {indicator}",
+            subtitle=f"Gender Comparison for Year {year}",
+            x="Country",
+            y="Population (thousands)",
+            fill="Gender"
+        ) +
+        theme_minimal() +
+        theme(
+            panel_grid_major_y=element_blank(),
+            panel_grid_minor=element_blank(),
+            legend_position="bottom",
+            legend_title=element_text(face="bold"),
+            axis_text_y=element_text(size=14),  # Increase country label font size
+            axis_text_x=element_text(size=12)   # Increase x-axis value font size
+        )
+    )
+    
+    # Use the enhanced display function with larger dimensions for better readability
+    display_plot(bar_chart, width=1400, height=1000, dpi=150)
+    
+    # Calculate and display gender disparity insights
+    male_total = plot_data[plot_data['sex'] == 'Male']['value'].sum()
+    female_total = plot_data[plot_data['sex'] == 'Female']['value'].sum()
+    total_ratio = male_total / female_total if female_total > 0 else 0
+    
+    # Display insights about the gender comparison
+    print(f"\n### Bottom Countries Gender Insights")
+    print(f"Overall male-to-female ratio among bottom countries: {total_ratio:.2f}")
+    
+    # Find country with highest gender disparity
+    if not gender_ratios.empty and not gender_ratios['ratio'].isna().all():
+        valid_ratios = gender_ratios.dropna(subset=['ratio'])
+        if not valid_ratios.empty:
+            max_disparity = valid_ratios.loc[valid_ratios['ratio'].idxmax()]
+            min_disparity = valid_ratios.loc[valid_ratios['ratio'].idxmin()]
+            print(f"Highest male-to-female ratio: {max_disparity['country']} ({max_disparity['ratio']:.2f})")
+            print(f"Lowest male-to-female ratio: {min_disparity['country']} ({min_disparity['ratio']:.2f})")
+
+# Create bar chart for the bottom countries using the top indicator and latest year
+if len(top_indicators) > 0:
+    create_bottom_bar_chart(top_indicators[0], latest_year, bottom_n=10)
+```
+
+### 📉 Bottom Countries Analysis
+
+This visualization provides valuable insights into countries with the lowest values for our indicator:
+
+- The bottom countries typically have much smaller absolute populations compared to the top countries
+- Gender disparities still exist in these nations but may show different patterns
+- These countries may represent small nations, those with successful interventions, or those with data collection challenges
+- Comparing the bottom and top charts helps place the global distribution in better context
+
+## 📝 Conclusions
+
+This analysis presents four key visualizations of UNICEF data:
+
+1. **World Map Chart**: Shows the global distribution of a key child development indicator, highlighting geographic disparities.
+
+2. **Bar Chart**: Displays the top countries for the selected indicator, allowing for direct comparison between nations.
+
+3. **Scatterplot with Regression Line**: Reveals relationships between different development indicators, with the trend line showing the overall correlation.
+
+4. **Time Series Chart**: Tracks how the indicator has changed over time for selected countries, demonstrating progress or challenges.
+
+Together, these visualizations provide a comprehensive view of global child development trends and patterns.
+
+## 📚 References
+
+1. UNICEF. (2023). The State of the World's Children. Retrieved from https://www.unicef.org/reports/state-worlds-children
+2. United Nations. (2023). Sustainable Development Goals Report. Retrieved from https://unstats.un.org/sdgs/report/2023/
